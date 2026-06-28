@@ -146,6 +146,66 @@ def allocate(amount, category):
         f.truncate()
 
 
+@bud.command()
+@click.argument("amount", type=float)
+@click.argument("category")
+@click.argument("message", required=False)
+def spend(amount, category, message):
+    if not os.path.exists("bud.json"):
+        click.echo("Error: bud.json not found. Run 'bud init' first.")
+        return
+
+    if amount <= 0:
+        click.echo("Error: Amount must be greater than zero.")
+        return
+
+    category = category.lower()
+    with open("bud.json", "r+") as f:
+        data = json.load(f)
+
+        if category not in data["balances"]["categories"]:
+            click.echo(f"Error: Category '{category}' does not exist.")
+            return
+
+        cat_balance = data["balances"]["categories"][category]
+        global_balance = data["balances"]["global"]
+
+        if cat_balance + global_balance < amount:
+            click.echo("Error: Insufficient combined funds.")
+            return
+
+        if cat_balance >= amount:
+            data["balances"]["categories"][category] -= amount
+            if not message:
+                message = f"Spent {amount} at {category} category"
+        else:
+            remainder = amount - cat_balance
+            data["balances"]["categories"][category] = 0.0
+            data["balances"]["global"] -= remainder
+            click.echo(
+                f"Notice: Category '{category}' short by ${remainder:.2f}. Covered from global funds."
+            )
+            if not message:
+                message = f"Spent {amount} at {category} category (Covered {remainder:.2f} from global)"
+
+        data["meta"]["last_updated"] = datetime.now(timezone.utc).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
+        data["history"].append(
+            {
+                "timestamp": data["meta"]["last_updated"],
+                "type": "use",
+                "amount": amount,
+                "category": category,
+                "message": message,
+            }
+        )
+
+        f.seek(0)
+        json.dump(data, f, indent=2)
+        f.truncate()
+
+
 @bud.group()
 def category():
     pass
