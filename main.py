@@ -5,6 +5,11 @@ from datetime import datetime, timezone
 import click
 
 
+@click.group()
+def bud():
+    pass
+
+
 @click.command()
 def init():
     if os.path.exists("bud.json"):
