@@ -49,7 +49,7 @@ def deposit(amount):
         data["history"].append(
             {
                 "timestamp": data["meta"]["last_updated"],
-                "type": "add",
+                "type": "deposit",
                 "amount": amount,
                 "category": None,
                 "message": "Deposit to global funds",
@@ -134,7 +134,7 @@ def allocate(amount, category):
         data["history"].append(
             {
                 "timestamp": data["meta"]["last_updated"],
-                "type": "budget",
+                "type": "allocate",
                 "amount": amount,
                 "category": category,
                 "message": f"Allocated to {category}",
@@ -194,7 +194,7 @@ def spend(amount, category, message):
         data["history"].append(
             {
                 "timestamp": data["meta"]["last_updated"],
-                "type": "use",
+                "type": "spend",
                 "amount": amount,
                 "category": category,
                 "message": message,
