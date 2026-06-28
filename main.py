@@ -27,6 +27,79 @@ def init():
         json.dump(template, f, indent=2)
 
 
+@bud.command()
+@click.argument("amount", type=float)
+def deposit(amount):
+    if not os.path.exists("bud.json"):
+        click.echo("Error: bud.json not found. Run 'bud init' first.")
+        return
+
+    if amount <= 0:
+        click.echo("Error: Amount must be greater than zero.")
+        return
+
+    with open("bud.json", "r+") as f:
+        data = json.load(f)
+
+        data["balances"]["global"] += amount
+        data["meta"]["last_updated"] = datetime.now(timezone.utc).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
+
+        data["history"].append(
+            {
+                "timestamp": data["meta"]["last_updated"],
+                "type": "add",
+                "amount": amount,
+                "category": None,
+                "message": "Deposit to global funds",
+            }
+        )
+
+        f.seek(0)
+        json.dump(data, f, indent=2)
+        f.truncate()
+
+
+@bud.command()
+@click.argument("amount", type=float)
+@click.argument("message", required=False, default="Withdraw money from global funds")
+def withdraw(amount, message):
+    if not os.path.exists("bud.json"):
+        click.echo("Error: bud.json not found. Run 'bud init' first.")
+        return
+
+    if amount <= 0:
+        click.echo("Error: Amount must be greater than zero.")
+        return
+
+    with open("bud.json", "r+") as f:
+        data = json.load(f)
+
+        if data["balances"]["global"] < amount:
+            click.echo("Error: Insufficient global funds.")
+            return
+
+        data["balances"]["global"] -= amount
+        data["meta"]["last_updated"] = datetime.now(timezone.utc).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
+
+        data["history"].append(
+            {
+                "timestamp": data["meta"]["last_updated"],
+                "type": "withdraw",
+                "amount": amount,
+                "category": None,
+                "message": message,
+            }
+        )
+
+        f.seek(0)
+        json.dump(data, f, indent=2)
+        f.truncate()
+
+
 @bud.group()
 def category():
     pass
