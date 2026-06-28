@@ -20,3 +20,13 @@ bud spend 15.50 food "Burrito"    # Log expense
 bud report food                   # View category status
 bud category archive food         # Close cat, return funds
 ```
+
+Another alternative:
+- Add a shebang at the very top of the file: `#!/usr/bin/env python3`
+- Make it executable via `chmod +x bud.py`
+Can now run:
+```bash
+./bud.py init
+./bud.py deposit 2400
+./bud.py allocate 400 food
+```
