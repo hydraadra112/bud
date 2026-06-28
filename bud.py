@@ -10,7 +10,7 @@ def bud():
     pass
 
 
-@click.command()
+@bud.command()
 def init():
     if os.path.exists("bud.json"):
         click.echo("Error: bud.json already exists in the current directory.")
@@ -335,9 +335,7 @@ def archive_category(name):
     click.echo(f"Category '{name}' archived. Returned ${balance:.2f} to global funds.")
 
 
-def main():
-    print("Hello from bud!")
-
+bud.add_command(category)
 
 if __name__ == "__main__":
-    main()
+    bud()
