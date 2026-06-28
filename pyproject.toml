@@ -7,3 +7,6 @@ requires-python = ">=3.12"
 dependencies = [
     "click>=8.4.2",
 ]
+
+[project.scripts]
+bud = "bud:bud"
