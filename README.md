@@ -1,5 +1,9 @@
+<div align="center">
+<img width="1000" height="975" alt="bud_logo_v3" src="https://github.com/user-attachments/assets/105b33b8-ebcc-451a-bc35-7c729ec46365" />
 # bud
-A lightweight, keyboard-driven personal budget tracker and power users.
+
+A lightweight, keyboard-driven personal budget tracker for power users.
+</div>
 
 How to use? (Temporary, for testing)
 ```bash
