@@ -1,4 +1,6 @@
+import json
 import os
+from datetime import datetime, timezone
 
 import click
 
@@ -9,8 +11,15 @@ def init():
         click.echo("Error: bud.json already exists in the current directory.")
         return
 
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    template = {
+        "meta": {"version": "1.0", "last_updated": now},
+        "balances": {"global": 0.0, "categories": {}, "archived_categories": []},
+        "history": [],
+    }
+
     with open("bud.json", "w") as f:
-        f.write("{}")
+        json.dump(template, f, indent=2)
 
 
 def main():
