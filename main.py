@@ -27,6 +27,11 @@ def init():
         json.dump(template, f, indent=2)
 
 
+@bud.group()
+def category():
+    pass
+
+
 def main():
     print("Hello from bud!")
 
