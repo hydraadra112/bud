@@ -234,6 +234,24 @@ def new_category(name):
         f.truncate()
 
 
+@category.command(name="list")
+def list_categories():
+    if not os.path.exists("bud.json"):
+        click.echo("Error: bud.json not found. Run 'bud init' first.")
+        return
+
+    with open("bud.json", "r") as f:
+        data = json.load(f)
+
+    categories = data["balances"]["categories"]
+    if not categories:
+        click.echo("No categories found.")
+        return
+
+    for name, balance in categories.items():
+        click.echo(f"- {name}: ${balance:.2f}")
+
+
 def main():
     print("Hello from bud!")
 
