@@ -252,6 +252,49 @@ def list_categories():
         click.echo(f"- {name}: ${balance:.2f}")
 
 
+@category.command(name="archive")
+@click.argument("name")
+def archive_category(name):
+    if not os.path.exists("bud.json"):
+        click.echo("Error: bud.json not found. Run 'bud init' first.")
+        return
+
+    name = name.lower()
+
+    with open("bud.json", "r+") as f:
+        data = json.load(f)
+
+        if name not in data["balances"]["categories"]:
+            click.echo(f"Error: Category '{name}' does not exist.")
+            return
+
+        balance = data["balances"]["categories"].pop(name)
+        data["balances"]["global"] += balance
+
+        if name not in data["balances"]["archived_categories"]:
+            data["balances"]["archived_categories"].append(name)
+
+        data["meta"]["last_updated"] = datetime.now(timezone.utc).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
+
+        data["history"].append(
+            {
+                "timestamp": data["meta"]["last_updated"],
+                "type": "archive",
+                "amount": balance,
+                "category": name,
+                "message": f"Archived category '{name}', returned ${balance:.2f} to global",
+            }
+        )
+
+        f.seek(0)
+        json.dump(data, f, indent=2)
+        f.truncate()
+
+    click.echo(f"Category '{name}' archived. Returned ${balance:.2f} to global funds.")
+
+
 def main():
     print("Hello from bud!")
 
