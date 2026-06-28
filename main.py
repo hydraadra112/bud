@@ -100,6 +100,52 @@ def withdraw(amount, message):
         f.truncate()
 
 
+@bud.command()
+@click.argument("amount", type=float)
+@click.argument("category")
+def allocate(amount, category):
+    if not os.path.exists("bud.json"):
+        click.echo("Error: bud.json not found. Run 'bud init' first.")
+        return
+
+    if amount <= 0:
+        click.echo("Error: Amount must be greater than zero.")
+        return
+
+    category = category.lower()
+
+    with open("bud.json", "r+") as f:
+        data = json.load(f)
+
+        if category not in data["balances"]["categories"]:
+            click.echo(f"Error: Category '{category}' does not exist.")
+            return
+
+        if data["balances"]["global"] < amount:
+            click.echo("Error: Insufficient global funds.")
+            return
+
+        data["balances"]["global"] -= amount
+        data["balances"]["categories"][category] += amount
+        data["meta"]["last_updated"] = datetime.now(timezone.utc).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
+
+        data["history"].append(
+            {
+                "timestamp": data["meta"]["last_updated"],
+                "type": "budget",
+                "amount": amount,
+                "category": category,
+                "message": f"Allocated to {category}",
+            }
+        )
+
+        f.seek(0)
+        json.dump(data, f, indent=2)
+        f.truncate()
+
+
 @bud.group()
 def category():
     pass
