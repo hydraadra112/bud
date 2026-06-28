@@ -28,6 +28,46 @@ def init():
 
 
 @bud.command()
+@click.argument("category")
+@click.option(
+    "-n",
+    "--entries",
+    type=int,
+    default=5,
+    help="Number of history entries to show.",
+)
+def report(category, entries):
+    if not os.path.exists("bud.json"):
+        click.echo("Error: bud.json not found. Run 'bud init' first.")
+        return
+
+    category = category.lower()
+
+    with open("bud.json", "r") as f:
+        data = json.load(f)
+
+    if category not in data["balances"]["categories"]:
+        click.echo(f"Error: Category '{category}' does not exist.")
+        return
+
+    balance = data["balances"]["categories"][category]
+    click.echo(f"Category: {category}")
+    click.echo(f"Remaining Balance: ${balance:.2f}")
+    click.echo("\nHistory:")
+
+    filtered_history = [h for h in data["history"] if h.get("category") == category]
+
+    if not filtered_history:
+        click.echo("  No history found for this category.")
+        return
+
+    for h in filtered_history[-entries:]:
+        click.echo(
+            f"  [{h['timestamp']}] {h['type'].upper()} - ${h['amount']:.2f} | {h['message']}"
+        )
+
+
+@bud.command()
 @click.argument("amount", type=float)
 def deposit(amount):
     if not os.path.exists("bud.json"):
