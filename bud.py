@@ -240,15 +240,16 @@ def spend(amount, category, message):
 
         if cat_balance >= amount:
             data["balances"]["categories"][category] -= amount
-            if not message:
-                message = f"Spent {amount} at {category}.\nTotal funds left for {category}: {cat_balance - amount}."
+            json_msg = message or f"Spent ${amount:.2f} from {category}."
+            echo_msg = f"Spent ${amount:.2f} at {category}.\nTotal funds left for {category}: ${data['balances']['categories'][category]:.2f}."
         else:
             remainder = amount - cat_balance
             data["balances"]["categories"][category] = 0.0
             data["balances"]["global"] -= remainder
-            if not message:
-                global_funds_left = data["balances"]["global"]
-                message = f"Notice: {category} short by ${remainder:.2f}. Covered from global funds.\nTotal global funds left: {global_funds_left}"
+            json_msg = (
+                message or f"Spent ${amount:.2f} from {category} (split with global)."
+            )
+            echo_msg = f"Notice: {category} short by ${remainder:.2f}. Covered from global funds.\nTotal global funds left: ${data['balances']['global']:.2f}"
 
         data["meta"]["last_updated"] = datetime.now(timezone.utc).strftime(
             "%Y-%m-%dT%H:%M:%SZ"
@@ -259,14 +260,14 @@ def spend(amount, category, message):
                 "type": "spend",
                 "amount": amount,
                 "category": category,
-                "message": message,
+                "message": json_msg,
             }
         )
 
         f.seek(0)
         json.dump(data, f, indent=2)
         f.truncate()
-        click.echo(message)
+        click.echo(echo_msg)
 
 
 @bud.group()
