@@ -172,8 +172,10 @@ def allocate(amount, category):
         data = json.load(f)
 
         if category not in data["balances"]["categories"]:
-            click.echo(f"Error: Category '{category}' does not exist.")
-            return
+            click.echo(
+                f"Notice: Category '{category}' does not currently exist.\nCreating '{category}' now."
+            )
+            data["balances"]["categories"][category] = 0.0
 
         if data["balances"]["global"] < amount:
             click.echo("Error: Insufficient global funds.")
