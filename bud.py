@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import json
 import os
 from datetime import datetime, timezone
@@ -25,6 +26,8 @@ def init():
 
     with open("bud.json", "w") as f:
         json.dump(template, f, indent=2)
+
+    click.echo("Initiated bud ledger (bud.json) in current directory.")
 
 
 @bud.command()
@@ -81,7 +84,9 @@ def deposit(amount):
     with open("bud.json", "r+") as f:
         data = json.load(f)
 
-        data["balances"]["global"] += amount
+        new_total = amount + data["balances"]["global"]
+
+        data["balances"]["global"] = new_total
         data["meta"]["last_updated"] = datetime.now(timezone.utc).strftime(
             "%Y-%m-%dT%H:%M:%SZ"
         )
@@ -99,6 +104,10 @@ def deposit(amount):
         f.seek(0)
         json.dump(data, f, indent=2)
         f.truncate()
+
+        click.echo(
+            f"Deposited {amount} to global funds. New global funds are {new_total}"
+        )
 
 
 @bud.command()
@@ -120,7 +129,8 @@ def withdraw(amount, message):
             click.echo("Error: Insufficient global funds.")
             return
 
-        data["balances"]["global"] -= amount
+        new_total = data["balances"]["global"] - amount
+        data["balances"]["global"] = new_total
         data["meta"]["last_updated"] = datetime.now(timezone.utc).strftime(
             "%Y-%m-%dT%H:%M:%SZ"
         )
@@ -138,6 +148,10 @@ def withdraw(amount, message):
         f.seek(0)
         json.dump(data, f, indent=2)
         f.truncate()
+
+        click.echo(
+            f"Withdrawn {amount} to global funds. New global funds are {new_total}."
+        )
 
 
 @bud.command()
@@ -165,8 +179,12 @@ def allocate(amount, category):
             click.echo("Error: Insufficient global funds.")
             return
 
-        data["balances"]["global"] -= amount
-        data["balances"]["categories"][category] += amount
+        new_total_global = data["balances"]["global"] - amount
+        data["balances"]["global"] = new_total_global
+
+        new_total_category = amount + data["balances"]["categories"][category]
+
+        data["balances"]["categories"][category] = new_total_category
         data["meta"]["last_updated"] = datetime.now(timezone.utc).strftime(
             "%Y-%m-%dT%H:%M:%SZ"
         )
@@ -184,6 +202,10 @@ def allocate(amount, category):
         f.seek(0)
         json.dump(data, f, indent=2)
         f.truncate()
+
+        click.echo(
+            f"Allocated {amount} to {category}./nTotal funds for {category}: {new_total_category}./nGlobal funds left: {new_total_global}"
+        )
 
 
 @bud.command()
@@ -211,22 +233,20 @@ def spend(amount, category, message):
         global_balance = data["balances"]["global"]
 
         if cat_balance + global_balance < amount:
-            click.echo("Error: Insufficient combined funds.")
+            click.echo(f"Error: Insufficient funds from {category} and global funds.")
             return
 
         if cat_balance >= amount:
             data["balances"]["categories"][category] -= amount
             if not message:
-                message = f"Spent {amount} at {category} category"
+                message = f"Spent {amount} at {category}./nTotal funds left for {category}: {cat_balance}."
         else:
             remainder = amount - cat_balance
             data["balances"]["categories"][category] = 0.0
             data["balances"]["global"] -= remainder
-            click.echo(
-                f"Notice: Category '{category}' short by ${remainder:.2f}. Covered from global funds."
-            )
             if not message:
-                message = f"Spent {amount} at {category} category (Covered {remainder:.2f} from global)"
+                global_funds_left = data["balances"]["global"]
+                message = f"Notice: {category} short by ${remainder:.2f}. Covered from global funds.\nTotal global funds left: {global_funds_left}"
 
         data["meta"]["last_updated"] = datetime.now(timezone.utc).strftime(
             "%Y-%m-%dT%H:%M:%SZ"
@@ -244,6 +264,7 @@ def spend(amount, category, message):
         f.seek(0)
         json.dump(data, f, indent=2)
         f.truncate()
+        click.echo(message)
 
 
 @bud.group()
@@ -272,6 +293,8 @@ def new_category(name):
         f.seek(0)
         json.dump(data, f, indent=2)
         f.truncate()
+
+    click.echo(f"Added '{category}' to categories.")
 
 
 @category.command(name="list")
