@@ -150,7 +150,7 @@ def withdraw(amount, message):
         f.truncate()
 
         click.echo(
-            f"Withdrawn {amount} to global funds. New global funds are {new_total}."
+            f"Withdrawn {amount} from global funds. New global funds are {new_total}."
         )
 
 
@@ -204,7 +204,7 @@ def allocate(amount, category):
         f.truncate()
 
         click.echo(
-            f"Allocated {amount} to {category}./nTotal funds for {category}: {new_total_category}./nGlobal funds left: {new_total_global}"
+            f"Allocated {amount} to {category}.\nTotal funds for {category}: {new_total_category}.\nGlobal funds left: {new_total_global}"
         )
 
 
@@ -239,7 +239,7 @@ def spend(amount, category, message):
         if cat_balance >= amount:
             data["balances"]["categories"][category] -= amount
             if not message:
-                message = f"Spent {amount} at {category}./nTotal funds left for {category}: {cat_balance}."
+                message = f"Spent {amount} at {category}.\nTotal funds left for {category}: {cat_balance - amount}."
         else:
             remainder = amount - cat_balance
             data["balances"]["categories"][category] = 0.0
@@ -294,7 +294,7 @@ def new_category(name):
         json.dump(data, f, indent=2)
         f.truncate()
 
-    click.echo(f"Added '{category}' to categories.")
+    click.echo(f"Added '{name}' to categories.")
 
 
 @category.command(name="list")
