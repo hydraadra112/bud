@@ -6,12 +6,12 @@ from datetime import datetime, timezone
 import click
 
 
-@click.group()
+@click.group(help="A lightweight, keyboard-driven personal budget tracker")
 def bud():
     pass
 
 
-@bud.command()
+@bud.command(help="Creates a bud.json file in the current working directory.")
 def init():
     if os.path.exists("bud.json"):
         click.echo("Error: bud.json already exists in the current directory.")
@@ -30,7 +30,7 @@ def init():
     click.echo("Initiated bud ledger (bud.json) in current directory.")
 
 
-@bud.command()
+@bud.command(help="Displays the remaining balance and the history of a given category.")
 @click.argument("category")
 @click.option(
     "-n",
@@ -70,7 +70,7 @@ def report(category, entries):
         )
 
 
-@bud.command()
+@bud.command(help="Adds funds in the global money pool.")
 @click.argument("amount", type=float)
 def deposit(amount):
     if not os.path.exists("bud.json"):
@@ -110,7 +110,7 @@ def deposit(amount):
         )
 
 
-@bud.command()
+@bud.command(help="Withdraws funds from the global money pool")
 @click.argument("amount", type=float)
 @click.argument("message", required=False, default="Withdraw money from global funds")
 def withdraw(amount, message):
@@ -154,7 +154,7 @@ def withdraw(amount, message):
         )
 
 
-@bud.command()
+@bud.command(help="Allocates funds to a given category.")
 @click.argument("amount", type=float)
 @click.argument("category")
 def allocate(amount, category):
@@ -210,7 +210,7 @@ def allocate(amount, category):
         )
 
 
-@bud.command()
+@bud.command(help="Spends funds on any given category.")
 @click.argument("amount", type=float)
 @click.argument("category")
 @click.argument("message", required=False)
@@ -270,12 +270,12 @@ def spend(amount, category, message):
         click.echo(echo_msg)
 
 
-@bud.group()
+@bud.group(help="For category related commands (create, archive, list)")
 def category():
     pass
 
 
-@category.command(name="new")
+@category.command(name="new", help="Creates a new category for you to allocate funds.")
 @click.argument("name")
 def new_category(name):
     if not os.path.exists("bud.json"):
@@ -300,7 +300,9 @@ def new_category(name):
     click.echo(f"Added '{name}' to categories.")
 
 
-@category.command(name="list")
+@category.command(
+    name="list", help="Lists down all created categories with their remaining budget."
+)
 def list_categories():
     if not os.path.exists("bud.json"):
         click.echo("Error: bud.json not found. Run 'bud init' first.")
@@ -318,7 +320,10 @@ def list_categories():
         click.echo(f"- {name}: ${balance:.2f}")
 
 
-@category.command(name="archive")
+@category.command(
+    name="archive",
+    help="Archives an existing category. History is preserved, and allocated funds will return to the global fund pool.",
+)
 @click.argument("name")
 def archive_category(name):
     if not os.path.exists("bud.json"):
