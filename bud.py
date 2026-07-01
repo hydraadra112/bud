@@ -7,6 +7,17 @@ from datetime import datetime, timezone
 import click
 
 RESERVED_CATEGORY_NAMES = {"global"}
+if os.name == "nt":
+    DATA_DIR = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "bud")
+else:
+    DATA_DIR = os.path.join(os.path.expanduser("~"), ".local", "share", "bud")
+
+DB_PATH = os.path.join(DATA_DIR, "bud.json")
+
+
+def ensure_db_dir():
+    """Ensure the directory structure exists before writing files."""
+    os.makedirs(DATA_DIR, exist_ok=True)
 
 
 def normalize_name(name):
@@ -37,17 +48,18 @@ def bud():
     pass
 
 
-@bud.command(help="Creates a bud.json file in the current working directory.")
+@bud.command(help="Creates a bud.json file in the application data directory.")
 @click.option(
     "--force",
     is_flag=True,
     help="Overwrite an existing bud.json, discarding all current data.",
 )
 def init(force):
-    exists = os.path.exists("bud.json")
+    ensure_db_dir()
+    exists = os.path.exists(DB_PATH)
 
     if exists and not force:
-        click.echo("Error: bud.json already exists in the current directory.")
+        click.echo(f"Error: bud.json already exists at {DB_PATH}")
         click.echo(
             "Tip: Use 'bud init --force' to overwrite it (this erases all existing data)."
         )
@@ -63,10 +75,10 @@ def init(force):
         "history": [],
     }
 
-    with open("bud.json", "w") as f:
+    with open(DB_PATH, "w") as f:
         json.dump(template, f, indent=2)
 
-    click.echo("Initiated bud ledger (bud.json) in current directory.")
+    click.echo(f"Initiated bud ledger at {DB_PATH}")
     click.echo("Tip: Run 'bud flow' or 'bud --help' for the basic commands.")
 
 
@@ -80,13 +92,13 @@ def init(force):
     help="Number of history entries to show.",
 )
 def report(category, entries):
-    if not os.path.exists("bud.json"):
-        click.echo("Error: bud.json not found. Run 'bud init' first.")
+    if not os.path.exists(DB_PATH):
+        click.echo("Error: Ledger not found. Run 'bud init' first.")
         return
 
     category = normalize_name(category)
 
-    with open("bud.json", "r") as f:
+    with open(DB_PATH, "r") as f:
         data = json.load(f)
 
     if category not in data["balances"]["categories"]:
@@ -113,8 +125,8 @@ def report(category, entries):
 @bud.command(help="Adds funds in the global money pool.")
 @click.argument("amount", type=float)
 def deposit(amount):
-    if not os.path.exists("bud.json"):
-        click.echo("Error: bud.json not found. Run 'bud init' first.")
+    if not os.path.exists(DB_PATH):
+        click.echo("Error: Ledger not found. Run 'bud init' first.")
         return
 
     error = validate_amount(amount)
@@ -123,7 +135,7 @@ def deposit(amount):
         click.echo("Tip: Enter a positive, finite number, e.g. 'bud deposit 50'.")
         return
 
-    with open("bud.json", "r+") as f:
+    with open(DB_PATH, "r+") as f:
         data = json.load(f)
 
         new_total = amount + data["balances"]["global"]
@@ -156,8 +168,8 @@ def deposit(amount):
 @click.argument("amount", type=float)
 @click.argument("message", required=False, default="Withdraw money from global funds")
 def withdraw(amount, message):
-    if not os.path.exists("bud.json"):
-        click.echo("Error: bud.json not found. Run 'bud init' first.")
+    if not os.path.exists(DB_PATH):
+        click.echo("Error: Ledger not found. Run 'bud init' first.")
         return
 
     error = validate_amount(amount)
@@ -166,7 +178,7 @@ def withdraw(amount, message):
         click.echo("Tip: Enter a positive, finite number, e.g. 'bud withdraw 20'.")
         return
 
-    with open("bud.json", "r+") as f:
+    with open(DB_PATH, "r+") as f:
         data = json.load(f)
 
         if data["balances"]["global"] < amount:
@@ -202,8 +214,8 @@ def withdraw(amount, message):
 @click.argument("amount", type=float)
 @click.argument("category")
 def allocate(amount, category):
-    if not os.path.exists("bud.json"):
-        click.echo("Error: bud.json not found. Run 'bud init' first.")
+    if not os.path.exists(DB_PATH):
+        click.echo("Error: Ledger not found. Run 'bud init' first.")
         return
 
     error = validate_amount(amount)
@@ -226,7 +238,7 @@ def allocate(amount, category):
         )
         return
 
-    with open("bud.json", "r+") as f:
+    with open(DB_PATH, "r+") as f:
         data = json.load(f)
 
         if category not in data["balances"]["categories"]:
@@ -275,8 +287,8 @@ def allocate(amount, category):
 @click.argument("category")
 @click.argument("message", required=False)
 def spend(amount, category, message):
-    if not os.path.exists("bud.json"):
-        click.echo("Error: bud.json not found. Run 'bud init' first.")
+    if not os.path.exists(DB_PATH):
+        click.echo("Error: Ledger not found. Run 'bud init' first.")
         return
 
     error = validate_amount(amount)
@@ -288,7 +300,7 @@ def spend(amount, category, message):
         return
 
     category = normalize_name(category)
-    with open("bud.json", "r+") as f:
+    with open(DB_PATH, "r+") as f:
         data = json.load(f)
 
         if category not in data["balances"]["categories"]:
@@ -370,8 +382,8 @@ def category():
 @category.command(name="new", help="Creates a new category for you to allocate funds.")
 @click.argument("name")
 def new_category(name):
-    if not os.path.exists("bud.json"):
-        click.echo("Error: bud.json not found. Run 'bud init' first.")
+    if not os.path.exists(DB_PATH):
+        click.echo("Error: Ledger not found. Run 'bud init' first.")
         return
 
     name = normalize_name(name)
@@ -386,7 +398,7 @@ def new_category(name):
         )
         return
 
-    with open("bud.json", "r+") as f:
+    with open(DB_PATH, "r+") as f:
         data = json.load(f)
 
         if name in data["balances"]["categories"]:
@@ -406,11 +418,11 @@ def new_category(name):
     name="list", help="Lists down all created categories with their remaining budget."
 )
 def list_categories():
-    if not os.path.exists("bud.json"):
-        click.echo("Error: bud.json not found. Run 'bud init' first.")
+    if not os.path.exists(DB_PATH):
+        click.echo("Error: Ledger not found. Run 'bud init' first.")
         return
 
-    with open("bud.json", "r") as f:
+    with open(DB_PATH, "r") as f:
         data = json.load(f)
 
     categories = data["balances"]["categories"]
@@ -428,8 +440,8 @@ def list_categories():
 )
 @click.argument("name")
 def archive_category(name):
-    if not os.path.exists("bud.json"):
-        click.echo("Error: bud.json not found. Run 'bud init' first.")
+    if not os.path.exists(DB_PATH):
+        click.echo("Error: Ledger not found. Run 'bud init' first.")
         return
 
     name = normalize_name(name)
@@ -440,7 +452,7 @@ def archive_category(name):
         )
         return
 
-    with open("bud.json", "r+") as f:
+    with open(DB_PATH, "r+") as f:
         data = json.load(f)
 
         if name not in data["balances"]["categories"]:
