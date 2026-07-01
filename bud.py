@@ -56,7 +56,7 @@ def report(category, entries):
 
     balance = data["balances"]["categories"][category]
     click.echo(f"Category: {category}")
-    click.echo(f"Remaining Balance: ${balance:.2f}")
+    click.echo(f"Remaining Balance: {balance:.2f}")
     click.echo("\nHistory:")
 
     filtered_history = [h for h in data["history"] if h.get("category") == category]
@@ -67,7 +67,7 @@ def report(category, entries):
 
     for h in filtered_history[-entries:]:
         click.echo(
-            f"  [{h['timestamp']}] {h['type'].upper()} - ${h['amount']:.2f} | {h['message']}"
+            f"  [{h['timestamp']}] {h['type'].upper()} - {h['amount']:.2f} | {h['message']}"
         )
 
 
@@ -242,16 +242,16 @@ def spend(amount, category, message):
 
         if cat_balance >= amount:
             data["balances"]["categories"][category] -= amount
-            json_msg = message or f"Spent ${amount:.2f} from {category}."
-            echo_msg = f"Spent ${amount:.2f} at {category}.\nTotal funds left for {category}: ${data['balances']['categories'][category]:.2f}."
+            json_msg = message or f"Spent {amount:.2f} from {category}."
+            echo_msg = f"Spent {amount:.2f} at {category}.\nTotal funds left for {category}: {data['balances']['categories'][category]:.2f}."
         else:
             remainder = amount - cat_balance
             data["balances"]["categories"][category] = 0.0
             data["balances"]["global"] -= remainder
             json_msg = (
-                message or f"Spent ${amount:.2f} from {category} (split with global)."
+                message or f"Spent {amount:.2f} from {category} (split with global)."
             )
-            echo_msg = f"Notice: {category} short by ${remainder:.2f}. Covered from global funds.\nTotal global funds left: ${data['balances']['global']:.2f}"
+            echo_msg = f"Notice: {category} short by {remainder:.2f}. Covered from global funds.\nTotal global funds left: {data['balances']['global']:.2f}"
 
         data["meta"]["last_updated"] = datetime.now(timezone.utc).strftime(
             "%Y-%m-%dT%H:%M:%SZ"
@@ -339,7 +339,7 @@ def list_categories():
         return
 
     for name, balance in categories.items():
-        click.echo(f"- {name}: ${balance:.2f}")
+        click.echo(f"- {name}: {balance:.2f}")
 
 
 @category.command(
@@ -377,7 +377,7 @@ def archive_category(name):
                 "type": "archive",
                 "amount": balance,
                 "category": name,
-                "message": f"Archived category '{name}', returned ${balance:.2f} to global",
+                "message": f"Archived category '{name}', returned {balance:.2f} to global",
             }
         )
 
@@ -385,7 +385,7 @@ def archive_category(name):
         json.dump(data, f, indent=2)
         f.truncate()
 
-    click.echo(f"Category '{name}' archived. Returned ${balance:.2f} to global funds.")
+    click.echo(f"Category '{name}' archived. Returned {balance:.2f} to global funds.")
 
 
 bud.add_command(category)
