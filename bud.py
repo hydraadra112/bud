@@ -1,9 +1,35 @@
 #!/usr/bin/env python3
 import json
+import math
 import os
 from datetime import datetime, timezone
 
 import click
+
+RESERVED_CATEGORY_NAMES = {"global"}
+
+
+def normalize_name(name):
+    """Strip whitespace and lowercase a category name."""
+    return name.strip().lower()
+
+
+def validate_amount(amount):
+    """
+    Returns an error message (str) if the amount is invalid, else None.
+    Rejects NaN, +/-Infinity, and non-positive values.
+    """
+    if not math.isfinite(amount):
+        return (
+            "Error: Amount must be a finite number (NaN and Infinity are not allowed)."
+        )
+    if amount <= 0:
+        return "Error: Amount must be greater than zero."
+    return None
+
+
+def is_reserved(name):
+    return name in RESERVED_CATEGORY_NAMES
 
 
 @click.group(help="A lightweight, keyboard-driven personal budget tracker")
@@ -12,10 +38,23 @@ def bud():
 
 
 @bud.command(help="Creates a bud.json file in the current working directory.")
-def init():
-    if os.path.exists("bud.json"):
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Overwrite an existing bud.json, discarding all current data.",
+)
+def init(force):
+    exists = os.path.exists("bud.json")
+
+    if exists and not force:
         click.echo("Error: bud.json already exists in the current directory.")
+        click.echo(
+            "Tip: Use 'bud init --force' to overwrite it (this erases all existing data)."
+        )
         return
+
+    if exists and force:
+        click.echo("Warning: Overwriting existing bud.json. All prior data is lost.")
 
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     template = {
@@ -45,7 +84,7 @@ def report(category, entries):
         click.echo("Error: bud.json not found. Run 'bud init' first.")
         return
 
-    category = category.lower()
+    category = normalize_name(category)
 
     with open("bud.json", "r") as f:
         data = json.load(f)
@@ -78,9 +117,10 @@ def deposit(amount):
         click.echo("Error: bud.json not found. Run 'bud init' first.")
         return
 
-    if amount <= 0:
-        click.echo("Error: Amount must be greater than zero.")
-        click.echo("Tip: Enter a positive number, e.g. 'bud deposit 50'.")
+    error = validate_amount(amount)
+    if error:
+        click.echo(error)
+        click.echo("Tip: Enter a positive, finite number, e.g. 'bud deposit 50'.")
         return
 
     with open("bud.json", "r+") as f:
@@ -108,7 +148,7 @@ def deposit(amount):
         f.truncate()
 
         click.echo(
-            f"Deposited {amount} to global funds. New global funds are {new_total}"
+            f"Deposited {amount:.2f} to global funds. New global funds are {new_total:.2f}"
         )
 
 
@@ -120,8 +160,10 @@ def withdraw(amount, message):
         click.echo("Error: bud.json not found. Run 'bud init' first.")
         return
 
-    if amount <= 0:
-        click.echo("Error: Amount must be greater than zero.")
+    error = validate_amount(amount)
+    if error:
+        click.echo(error)
+        click.echo("Tip: Enter a positive, finite number, e.g. 'bud withdraw 20'.")
         return
 
     with open("bud.json", "r+") as f:
@@ -152,7 +194,7 @@ def withdraw(amount, message):
         f.truncate()
 
         click.echo(
-            f"Withdrawn {amount} from global funds. New global funds are {new_total}."
+            f"Withdrawn {amount:.2f} from global funds. New global funds are {new_total:.2f}."
         )
 
 
@@ -164,11 +206,25 @@ def allocate(amount, category):
         click.echo("Error: bud.json not found. Run 'bud init' first.")
         return
 
-    if amount <= 0:
-        click.echo("Error: Amount must be greater than zero.")
+    error = validate_amount(amount)
+    if error:
+        click.echo(error)
+        click.echo(
+            "Tip: Enter a positive, finite number, e.g. 'bud allocate 25 groceries'."
+        )
         return
 
-    category = category.lower()
+    category = normalize_name(category)
+
+    if not category:
+        click.echo("Error: Category name cannot be empty.")
+        return
+
+    if is_reserved(category):
+        click.echo(
+            f"Error: '{category}' is a reserved name and can't be used as a category."
+        )
+        return
 
     with open("bud.json", "r+") as f:
         data = json.load(f)
@@ -208,7 +264,9 @@ def allocate(amount, category):
         f.truncate()
 
         click.echo(
-            f"Allocated {amount} to {category}.\nTotal funds for {category}: {new_total_category}.\nGlobal funds left: {new_total_global}"
+            f"Allocated {amount:.2f} to {category}.\n"
+            f"Total funds for {category}: {new_total_category:.2f}.\n"
+            f"Global funds left: {new_total_global:.2f}"
         )
 
 
@@ -221,11 +279,15 @@ def spend(amount, category, message):
         click.echo("Error: bud.json not found. Run 'bud init' first.")
         return
 
-    if amount <= 0:
-        click.echo("Error: Amount must be greater than zero.")
+    error = validate_amount(amount)
+    if error:
+        click.echo(error)
+        click.echo(
+            "Tip: Enter a positive, finite number, e.g. 'bud spend 12 groceries \"eggs and milk\"'."
+        )
         return
 
-    category = category.lower()
+    category = normalize_name(category)
     with open("bud.json", "r+") as f:
         data = json.load(f)
 
@@ -243,7 +305,10 @@ def spend(amount, category, message):
         if cat_balance >= amount:
             data["balances"]["categories"][category] -= amount
             json_msg = message or f"Spent {amount:.2f} from {category}."
-            echo_msg = f"Spent {amount:.2f} at {category}.\nTotal funds left for {category}: {data['balances']['categories'][category]:.2f}."
+            echo_msg = (
+                f"Spent {amount:.2f} at {category}.\n"
+                f"Total funds left for {category}: {data['balances']['categories'][category]:.2f}."
+            )
         else:
             remainder = amount - cat_balance
             data["balances"]["categories"][category] = 0.0
@@ -251,7 +316,10 @@ def spend(amount, category, message):
             json_msg = (
                 message or f"Spent {amount:.2f} from {category} (split with global)."
             )
-            echo_msg = f"Notice: {category} short by {remainder:.2f}. Covered from global funds.\nTotal global funds left: {data['balances']['global']:.2f}"
+            echo_msg = (
+                f"Notice: {category} short by {remainder:.2f}. Covered from global funds.\n"
+                f"Total global funds left: {data['balances']['global']:.2f}"
+            )
 
         data["meta"]["last_updated"] = datetime.now(timezone.utc).strftime(
             "%Y-%m-%dT%H:%M:%SZ"
@@ -285,7 +353,9 @@ def flow():
     click.echo("  bud category archive food         # Close cat, return funds")
     click.echo("\nFunds live in one of two places: the global pool, or a category.")
     click.echo(
-        "Deposit fills the global pool. Allocate moves money from global into a category. Spend draws from a category first, then global if it runs short. Archiving a category returns whatever's left to the global pool."
+        "Deposit fills the global pool. Allocate moves money from global into a category. "
+        "Spend draws from a category first, then global if it runs short. Archiving a "
+        "category returns whatever's left to the global pool."
     )
     click.echo(
         "\nRun any command with --help for its full options, e.g. 'bud spend --help'."
@@ -304,7 +374,17 @@ def new_category(name):
         click.echo("Error: bud.json not found. Run 'bud init' first.")
         return
 
-    name = name.lower()
+    name = normalize_name(name)
+
+    if not name:
+        click.echo("Error: Category name cannot be empty.")
+        return
+
+    if is_reserved(name):
+        click.echo(
+            f"Error: '{name}' is a reserved name and can't be used as a category."
+        )
+        return
 
     with open("bud.json", "r+") as f:
         data = json.load(f)
@@ -352,7 +432,13 @@ def archive_category(name):
         click.echo("Error: bud.json not found. Run 'bud init' first.")
         return
 
-    name = name.lower()
+    name = normalize_name(name)
+
+    if is_reserved(name):
+        click.echo(
+            f"Error: '{name}' is a reserved name and can't be archived as a category."
+        )
+        return
 
     with open("bud.json", "r+") as f:
         data = json.load(f)
