@@ -28,6 +28,7 @@ def init():
         json.dump(template, f, indent=2)
 
     click.echo("Initiated bud ledger (bud.json) in current directory.")
+    click.echo("Tip: Run 'bud flow' or 'bud --help' for the basic commands.")
 
 
 @bud.command(help="Displays the remaining balance and the history of a given category.")
@@ -79,6 +80,7 @@ def deposit(amount):
 
     if amount <= 0:
         click.echo("Error: Amount must be greater than zero.")
+        click.echo("Tip: Enter a positive number, e.g. 'bud deposit 50'.")
         return
 
     with open("bud.json", "r+") as f:
@@ -268,6 +270,26 @@ def spend(amount, category, message):
         json.dump(data, f, indent=2)
         f.truncate()
         click.echo(echo_msg)
+        click.echo(f"Tip: Run 'bud report {category}' to view the updated history.")
+
+
+@bud.command(help="Shows the typical command pipeline, from init to archive.")
+def flow():
+    click.echo("Typical bud workflow, start to finish:\n")
+    click.echo("  bud init                          # Init ledger")
+    click.echo("  bud category new food             # Create category")
+    click.echo("  bud deposit 2500.00               # Add global funds")
+    click.echo("  bud allocate 400.00 food          # Move funds to category")
+    click.echo('  bud spend 15.50 food "Burrito"    # Log expense')
+    click.echo("  bud report food                   # View category status")
+    click.echo("  bud category archive food         # Close cat, return funds")
+    click.echo("\nFunds live in one of two places: the global pool, or a category.")
+    click.echo(
+        "Deposit fills the global pool. Allocate moves money from global into a category. Spend draws from a category first, then global if it runs short. Archiving a category returns whatever's left to the global pool."
+    )
+    click.echo(
+        "\nRun any command with --help for its full options, e.g. 'bud spend --help'."
+    )
 
 
 @bud.group(help="For category related commands (create, archive, list)")
