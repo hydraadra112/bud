@@ -7,6 +7,9 @@
 
 ---
 
+<img height="596" alt="image" src="https://github.com/user-attachments/assets/ee08e230-ccfa-4975-bf00-2713c2325398" />
+
+
 > [!NOTE]
 > Currently only supports Linux distros. Will add Windows support soon.
 
