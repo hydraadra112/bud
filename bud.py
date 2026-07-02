@@ -446,12 +446,13 @@ def flow():
     click.echo("  bud allocate 400.00 food          # Move funds to category")
     click.echo('  bud spend 15.50 food "Burrito"    # Log expense')
     click.echo("  bud report food                   # View category status")
+    click.echo("  bud dashboard                     # Visualizes your data")
     click.echo("  bud category archive food         # Close cat, return funds")
-    click.echo("\nFunds live in one of two places: the global pool, or a category.")
     click.echo(
-        "Deposit fills the global pool. Allocate moves money from global into a category. "
-        "Spend draws from a category first, then global if it runs short. Archiving a "
-        "category returns whatever's left to the global pool."
+        "\nFunds live in one of two places: the global pool, or a category."
+        "\nDeposit fills the global pool. Allocate moves money from global into a category."
+        "\nSpend draws from a category first, then global if it runs short."
+        "\nArchiving a category returns whatever's left to the global pool."
     )
     click.echo(
         "\nRun any command with --help for its full options, e.g. 'bud spend --help'."
