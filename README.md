@@ -3,11 +3,9 @@
 <h1>bud</h1>
 
 <p>A lightweight, keyboard-driven personal budget tracker for terminal users </p>
-</div>
 
 [![Bud demo](./assets/demo.svg)](https://asciinema.org/connect/5b523539-0ced-456c-b68a-3637d5a2a3e2)
 ---
-
 > [!NOTE]
 > Currently only supports Linux distros. Will add Windows support soon.
 
