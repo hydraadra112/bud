@@ -5,7 +5,7 @@
 <p>A lightweight, keyboard-driven personal budget tracker for terminal users</p>
 
 <a href="https://asciinema.org/connect/5b523539-0ced-456c-b68a-3637d5a2a3e2">
-  <img src="./assets/demo.svg" alt="Bud demo" width="600" />
+  <img src="./assets/demo.svg" alt="Bud demo" style="width:100%; max-width:900px;" />
 </a>
 
 </div>
