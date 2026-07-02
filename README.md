@@ -7,8 +7,10 @@
 
 ---
 
-<img height="596" alt="image" src="https://github.com/user-attachments/assets/ee08e230-ccfa-4975-bf00-2713c2325398" />
-
+<p align="center">
+  <img height="400" alt="image" src="https://github.com/user-attachments/assets/ee08e230-ccfa-4975-bf00-2713c2325398" />
+  <img height="400" alt="Screenshot from 2026-07-02 16-18-05" src="https://github.com/user-attachments/assets/fa658b10-5552-4ef3-ae7b-390daf5d2630" />
+</p>
 
 > [!NOTE]
 > Currently only supports Linux distros. Will add Windows support soon.
