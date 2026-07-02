@@ -82,6 +82,86 @@ def init(force):
     click.echo("Tip: Run 'bud flow' or 'bud --help' for the basic commands.")
 
 
+DASHBOARD_BAR_WIDTH = 20
+DASHBOARD_NAME_WIDTH = 10
+
+
+def format_bar(pct, width=DASHBOARD_BAR_WIDTH):
+    """Renders a filled/empty block bar for a 0-100 percentage."""
+    pct = max(0.0, min(pct, 100.0))
+    filled = int(round((pct / 100.0) * width))
+    filled = min(filled, width)
+    return "█" * filled + "░" * (width - filled)
+
+
+def truncate_name(name, width=DASHBOARD_NAME_WIDTH):
+    """Truncates long category names to fit column width, adding an ellipsis."""
+    if len(name) <= width:
+        return name
+    return name[: width - 1] + "…"
+
+
+@bud.command(help="Shows an overview of category budgets and recent activity.")
+@click.option(
+    "-n",
+    "--entries",
+    type=int,
+    default=5,
+    help="Number of recent history entries to show.",
+)
+def dashboard(entries):
+    if not os.path.exists(DB_PATH):
+        click.echo("Error: Ledger not found. Run 'bud init' first.")
+        return
+
+    with open(DB_PATH, "r") as f:
+        data = json.load(f)
+
+    categories = data["balances"]["categories"]
+    history = data["history"]
+
+    click.echo("CATEGORIES")
+    click.echo("-" * 80)
+
+    if not categories:
+        click.echo("No categories found.")
+    else:
+        spent_by_category = {}
+        for h in history:
+            if h["type"] == "spend" and h.get("category") in categories:
+                cat = h["category"]
+                spent_by_category[cat] = spent_by_category.get(cat, 0.0) + h["amount"]
+
+        for name, avail in categories.items():
+            spent = spent_by_category.get(name, 0.0)
+            total = spent + avail
+            pct = (spent / total * 100) if total > 0 else 0.0
+            pct = math.floor(pct * 10) / 10  # truncate to 1 decimal, don't round up
+            bar = format_bar(pct)
+            label = truncate_name(name)
+            click.echo(
+                f"{label:<{DASHBOARD_NAME_WIDTH}} [{bar}] {pct:>5.1f}%  |  "
+                f"Spent: ${spent:,.2f}  |  Avail: ${avail:,.2f}"
+            )
+
+    click.echo()
+    click.echo("RECENT BUDGET USAGE")
+    click.echo("-" * 80)
+
+    if not history:
+        click.echo("No activity recorded yet.")
+        return
+
+    recent = list(reversed(history[-entries:]))
+    for h in recent:
+        sign = "-" if h["type"] in ("spend", "withdraw") else "+"
+        cat_label = truncate_name(h.get("category") or "global")
+        click.echo(
+            f"{h['timestamp'][:10]}  {h['type']:<9}{sign}${h['amount']:>10,.2f}  "
+            f'{cat_label:<{DASHBOARD_NAME_WIDTH}} "{h["message"]}"'
+        )
+
+
 @bud.command(help="Displays the remaining balance and the history of a given category.")
 @click.argument("category")
 @click.option(
