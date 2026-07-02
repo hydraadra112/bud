@@ -3,17 +3,11 @@
 <h1>bud</h1>
 
 <p>A lightweight, keyboard-driven personal budget tracker for terminal users </p>
+
+[![asciicast](https://asciinema.org/a/R8ZYdQWtCl7nooFR.svg)](https://asciinema.org/a/R8ZYdQWtCl7nooFR)
 </div>
 
 ---
-
-<table align="center" style="border-collapse: collapse; border: none;">
-  <tr style="border: none;">
-    <td style="border: none; padding: 5px;"><img height="380" alt="CLI Commands" src="https://github.com/user-attachments/assets/ee08e230-ccfa-4975-bf00-2713c2325398" /></td>
-    <td style="border: none; padding: 5px;"><img height="380" alt="ASCII Dashboard" src="https://github.com/user-attachments/assets/fa658b10-5552-4ef3-ae7b-390daf5d2630" /></td>
-  </tr>
-</table>
-
 > [!NOTE]
 > Currently only supports Linux distros. Will add Windows support soon.
 
