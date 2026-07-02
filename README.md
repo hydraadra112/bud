@@ -5,6 +5,7 @@
 <p>A lightweight, keyboard-driven personal budget tracker for terminal users </p>
 
 [![Bud demo](./assets/demo.svg)](https://asciinema.org/connect/5b523539-0ced-456c-b68a-3637d5a2a3e2)
+</div>
 ---
 > [!NOTE]
 > Currently only supports Linux distros. Will add Windows support soon.
@@ -43,4 +44,4 @@ bud category archive food         # Close cat, return funds
 - Archiving a category returns whatever's left to the global pool.
 
 ## Why did I make this?
-I designed this little CLI tool for personal use, for managing my own budget, especially that I am transitioning into my professional life. I prefer making things work in my own workspace rather than leaving, and looking at a spreadsheet. I know there are people out there like me, so I decided to share this.
+I designed this little CLI tool for managing my own budget. I prefer making things work in my own workspace rather managing a spreadsheet. I decided to share this as well, because some terminal user out there might want to manage their budget in their terminal too.
